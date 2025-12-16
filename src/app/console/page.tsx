@@ -246,7 +246,7 @@ export default function ConsolePage() {
     <div className="mx-auto max-w-6xl px-6 py-12">
       <div className="flex items-end justify-between gap-6">
         <div>
-          <h1 className="text-2xl font-semibold text-ink">Instrument Console</h1>
+          <h1 className="text-2xl font-semibold text-ink">GIWAXS Parameter Effects</h1>
           <p className="mt-2 text-sm text-muted">
             Adjust acquisition and geometry parameters. The simulated frame and visual twin update in real time.
           </p>

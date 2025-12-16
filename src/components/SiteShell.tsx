@@ -46,7 +46,7 @@ export function SiteShell({ children }: { children: React.ReactNode }) {
               Documentation
             </Link>
             <a
-              href="https://github.com/"
+              href="https://github.com/twinspec/"
               target="_blank"
               rel="noreferrer"
               className="hover:text-ink transition-colors"
