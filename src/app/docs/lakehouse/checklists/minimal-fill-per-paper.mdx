@@ -1,0 +1,347 @@
+# Minimal-Fill Checklist Per Paper
+
+## Goal
+
+For each paper, produce:
+
+1. **One** method JSON (paper-level)
+2. **One or more** experiment JSONs (film-level; one per `experiment_id`)
+3. **One or more** characterization JSONs (dataset-level; one per `characterization_id`)
+4. **One or more** `experiments.csv` rows (one per `experiment_id`)
+
+**Rule:** Do not invent values. If not reported, leave blank (CSV) or `null` / `""` (JSON).
+
+---
+
+## A) Paper Intake
+
+### A1) Identify target material
+
+- [ ] Identify the **target** `material_id` for this paper  
+  `material_id: ______________________`
+
+### A2) Record DOI
+
+- [ ] Record DOI (**DOI only**, no URL prefix)  
+  `doi: ______________________________`
+
+### A3) Bibliographic basics
+
+- [ ] Record:
+  - `first_author: _____________________`
+  - `year: ____________________________`
+  - `journal: _________________________`
+  - `journalSlug (lowercase): _________`
+
+### A4) Create `paper_id`
+
+- [ ] Create `paper_id` using:
+
+  `paper_id = {material_id}_{FirstAuthor}{Year}_{journalSlug}`
+
+  `paper_id: _________________________`
+
+### A5) Create method JSON (paper-level)
+
+- [ ] Create method JSON file at:
+
+  `raw/literature/method_json/<subclass>/<paper_id>.json`
+
+- [ ] Choose subclass folder:
+
+  - `conjugated_polymers`
+  - `commodity_polymers`
+  - `biomaterials`
+  - `metal_organics`
+  - `oxides`
+  - `perovskites`
+
+- [ ] Record:
+
+  `method_json_path: raw/literature/method_json/______________________/________________________.json`
+
+### A6) Fill minimal method JSON fields
+
+Required fields:
+
+- `paper_id`
+- `doi`
+- `title`
+- `journal`
+- `year`
+- `materials[0]`:
+  - `material_id`
+  - `name`
+  - `class`
+  - `subclass`
+  - `role_in_stack`
+  - `formula_or_sequence` (if relevant)
+  - `repeat_unit_smiles` (if relevant)
+  - `notes`
+- `figures_inventory[]`:
+  - For each GIWAXS figure you plan to digitize:
+    - `figure_id` (e.g., `fig3`)
+    - `type` (`GIWAXS_2D` or `GIWAXS_1D`)
+    - `crop_path` (if already cropped)
+
+### A7) Optional: store figure crops
+
+- [ ] **Only if already cropped**, save figure crop(s) under:
+
+  `raw/literature/fig_crops/`
+
+- [ ] Add `crop_path` entries into `figures_inventory`.
+
+**Notes**
+- Method JSON is **paper-level**. Do **not** put film thickness or anneal time here.
+- Method JSON inventories figures; it does **not** store digitized CSV outputs.
+
+---
+
+## B) For Each Film Condition
+
+For each distinct film / sample / condition reported in the paper:
+
+### B1) Decide grouping identifiers
+
+#### Choose `experiment_family_id` (grouping key)
+
+- [ ] Choose `experiment_family_id`:
+
+  `experiment_family_id = {material_id}_{solventAbbr}_{annealTempC}C`
+
+  - `solventAbbr` (short, e.g., `CB`, `oDCB`, `Xyl`, `DMF`):  
+    `solventAbbr: _______________________`
+  - `annealTempC` (`RT` if room temperature, else numeric):  
+    `annealTempC: _______________________`
+
+  `experiment_family_id: ________________________________`
+
+#### Define `experiment_id` (unique film)
+
+- [ ] Define `experiment_id`:
+
+  `experiment_id = {material_id}_{FirstAuthor}{Year}_{solventAbbr}_{annealTempC}C_{annealTimeMinute}minute_{thicknessNominal}nm_{castingMethod}`
+
+**Rules**
+- If anneal time not reported, **omit** the `_{annealTimeMinute}minute` segment.
+- If thickness nominal not reported, use best available (or omit and track in `experiment_json`).
+- `castingMethod` must be a full token (`spincoat`, `bladecoat`, `dropcast`, etc.).
+
+`experiment_id: ________________________________________`
+
+---
+
+### B2) Create experiment JSON (film-level)
+
+- [ ] Create experiment JSON at:
+
+  `raw/literature/experiment_json/{experiment_id}.json`
+
+`experiment_json_path: raw/literature/experiment_json/________________________________________.json`
+
+#### Minimal experiment JSON fields
+
+Required:
+
+- `experiment_id`
+- `paper_id`
+- `material_id`
+- `experiment_family_id`
+
+`solution`
+- `concentration_mg_ml` (if reported)
+- `solvent` (full name)
+- `solvent_mixture` (blank if none / not reported)
+- `additives` (blank if none / not reported)
+
+`substrate`
+- `material` (if reported)
+- `treatment` (if reported)
+- `treatment_time_minute` (if reported)
+
+`deposition`
+- `casting_method` (`spincoat` / `bladecoat` / etc.)
+- `casting_parameters {}` (leave empty unless key numbers are reported)
+
+`annealing`
+- `performed` (true/false)
+- `anneal_temp_C` (if performed)
+- `anneal_time_minute` (if reported)
+- `ramp_rate_C_per_minute {min,max}` (if reported)
+- `hold_time_reported` (true/false/null)
+- `atmosphere` (if reported)
+
+`film`
+- `thickness_min_nm` / `thickness_max_nm` / `thickness_nominal_nm` (as available)
+
+`notes_freeform`
+- only if needed to clarify missing info or assumptions
+
+---
+
+### B3) Add `experiments.csv` row (film-level index)
+
+- [ ] Add one row to: `curated/experiments/experiments.csv`
+
+#### Required IDs
+- `experiment_id = _________________________________`
+- `paper_id = ______________________________________`
+- `material_id = ___________________________________`
+- `experiment_family_id = __________________________`
+- `characterization_id` (optional in this step; fill after section C)
+
+#### Reference
+- `reference_type = literature`
+- `reference_doi = _________________________________`
+- `include_in_unity = 0 or 1`
+
+#### Processing
+- `solvent = (full name) ___________________________`
+- `solvent_mixture = _______________________________`
+- `additives = _____________________________________`
+- `concentration_mg_ml = ___________________________`
+- `casting_method = ________________________________`
+- `substrate = _____________________________________`
+- `substrate_treatment = ___________________________`
+- `substrate_treatment_time_minute = _______________`
+
+#### Annealing
+- `anneal = true/false`
+- `anneal_temp_C = ________________________________`
+- `anneal_time_minute = ___________________________`
+- `anneal_atmosphere = ____________________________`
+
+#### Thickness
+- `film_thickness_min_nm = ________________________`
+- `film_thickness_max_nm = ________________________`
+- `film_thickness_nominal_nm = ____________________`
+
+#### Orientation
+- `orientation_label = _____________________________`
+
+#### JSON pointers
+- `method_json_path = raw/literature/method_json/<subclass>/{paper_id}.json`
+- `experiment_json_path = raw/literature/experiment_json/{experiment_id}.json`
+- `characterization_json_path =` (fill after section C)
+
+#### Misc
+- `casting_parameters_json =` (leave blank unless you want JSON inline)
+- `peaks_json =` (leave blank or minimal)
+- `giwaxs_1d_path =` (fill if you have 1D)
+- `giwaxs_2d_path =` (fill after digitization)
+- `notes = _________________________________________`
+
+**Rule**
+- `experiments.csv` should not carry ramp rate columns.
+- If anneal time is missing but ramp rate is reported:
+  - leave `anneal_time_minute` blank
+  - store ramp rate in `experiment_json`
+
+---
+
+## C) For Each Dataset You Digitize
+
+For each GIWAXS dataset (at minimum, one 2D map per experiment you plan to demo):
+
+### C1) Define `characterization_id`
+
+- [ ] Choose role:
+  - `2d_map`
+  - `1d_linecut_oop`
+  - `1d_linecut_ip`
+  - `1d_linecut_radial`
+
+  `role: _______________________________`
+
+- [ ] Build `characterization_id`:
+
+  `characterization_id = {experiment_id}_GIWAXS_{role}`
+
+  `characterization_id: _______________________________________________`
+
+---
+
+### C2) Create characterization JSON (dataset-level)
+
+- [ ] Create characterization JSON at:
+
+  `raw/literature/char_metadata/{characterization_id}.json`
+
+`characterization_json_path: raw/literature/char_metadata/________________________________________.json`
+
+#### Minimal characterization JSON fields
+
+Required:
+
+- `characterization_id`
+- `experiment_id`
+- `char_type = GIWAXS`
+- `role` (from above)
+
+`provenance`
+- `paper_id`
+- `reference_doi`
+- `figure_id` (e.g., `fig3`)
+- `figure_panel` (e.g., `a`, `b`; optional)
+
+`raw_inputs`
+- `source_figure_crop_path = raw/literature/fig_crops/<file>.png`
+
+`q_mapping`
+- `qz_min` / `qz_max`
+- `qxy_min` / `qxy_max`
+- `units` (`1/A` or `1/nm`)
+- `geometry` (`qz_qxy`)
+
+`masks_and_artifacts`
+- `missing_wedge_present` (true/false)
+- `colorbar_present_in_crop` (true/false)
+- `axis_labels_present_in_crop` (true/false)
+- `panel_labels_present_in_crop` (true/false)
+
+`digitization`
+- `parameters`:
+  - `downsample_factor` (e.g., 2)
+  - `missing_wedge_fill_strategy` (`nan`)
+  - `use_colorbar_if_present` (true/false)
+- `outputs`:
+  - `digitized_2d_csv_path = raw/literature/giwaxs_2d_csv/<file>.csv`
+
+---
+
+### C3) Update `experiments.csv` pointers after digitization
+
+- [ ] Set `characterization_json_path` in `experiments.csv` for this `experiment_id`:
+
+  `characterization_json_path = raw/literature/char_metadata/{characterization_id}.json`
+
+- [ ] Set `giwaxs_2d_path` in `experiments.csv`:
+
+  `giwaxs_2d_path = raw/literature/giwaxs_2d_csv/<file>.csv`
+
+- [ ] If you also digitize 1D linecuts, set `giwaxs_1d_path` accordingly:
+
+  `giwaxs_1d_path = raw/literature/giwaxs_1d_csv/<file>.csv`
+
+- [ ] (Optional) Fill `peaks_json` or `orientation_label` if extracted/known.
+
+---
+
+## D) Final Sanity Checks (Per Paper)
+
+- [ ] Every `experiments.csv` row has valid:
+  - `paper_id`
+  - `material_id`
+  - `experiment_family_id`
+  - `experiment_id`
+  - `method_json_path` exists
+  - `experiment_json_path` exists
+
+- [ ] For Unity-selected rows (`include_in_unity = 1`):
+  - `characterization_json_path` exists
+  - `giwaxs_2d_path` exists **or** there is a crop ready to digitize
+
+- [ ] All paths are repo-relative and use forward slashes.
+
+- [ ] Missing values are **blank** in CSV (not `0`, not `"null"`).
